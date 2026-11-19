@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Generator Soal SD</title>
+<style>
+:root{color-scheme:light;--bg:#f2f6fd;--card:#fff;--fg:#14254a;--muted:#5a6b8c;--line:#d6e1f3;--acc:#1f5fd1;--acc-dark:#163f8f;--acc-fg:#fff;--yel:#ffc928;--yel-soft:#fff6d6;--ok:#13804b;--err:#c0311f;--input:#fff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:linear-gradient(135deg,var(--acc) 0%,var(--acc-dark) 100%);color:#fff;border-bottom:6px solid var(--yel)}
+header .in{max-width:860px;margin:0 auto;padding:28px 16px 24px;display:flex;gap:16px;align-items:center}
+header .logo{flex:none;width:76px;height:76px;border-radius:16px;background:#fff;border:3px solid var(--yel);display:grid;place-items:center;padding:7px;box-shadow:0 4px 12px rgba(0,0,0,.18)}
+header .logo img{max-width:100%;max-height:100%;display:block}
+main{max-width:860px;margin:0 auto;padding:22px 16px 64px}
+h1{font-size:24px;margin:0 0 2px}
+.sub{color:#dbe6ff;margin:0;font-size:14px}
+section{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--acc);border-radius:12px;padding:18px;margin-bottom:14px;box-shadow:0 2px 8px rgba(31,95,209,.06)}
+section h2,details summary{font-size:16px;margin:0 0 12px;color:var(--acc-dark)}
+details summary{margin:0}
+section h2 .num{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--yel);color:var(--acc-dark);font-size:13px;margin-right:8px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:0;border-color:var(--acc)}
+button:hover{border-color:var(--acc);color:var(--acc)}
+button.primary:hover{background:var(--acc-dark);color:#fff}
+#hasil{border-top-color:var(--yel);background:var(--yel-soft)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--input);color:var(--fg);font:inherit}
+textarea{resize:vertical;min-height:60px}
+.full{grid-column:1/-1}
+.row{display:flex;gap:8px;align-items:center}
+.row input{flex:1}
+button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--fg);padding:8px 14px;border-radius:8px;cursor:pointer;white-space:nowrap}
+button.primary{background:var(--acc);color:var(--acc-fg);border:none;border-bottom:4px solid var(--yel);font-weight:700;padding:13px 20px;width:100%;font-size:17px;border-radius:10px;box-shadow:0 4px 14px rgba(31,95,209,.25)}
+button:disabled{opacity:.55;cursor:wait}
+.hint{font-size:12px;color:var(--muted);margin-top:4px}
+.mix{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+details summary{cursor:pointer;font-weight:600;font-size:15px}
+details[open] summary{margin-bottom:12px}
+#log{font-family:ui-monospace,monospace;font-size:13px;white-space:pre-wrap;color:var(--muted);margin:10px 0 0}
+.err{color:var(--err)} .ok{color:var(--ok);font-weight:600}
+.files a{display:block;color:var(--acc);word-break:break-all}
+.pill{display:inline-block;font-size:12px;font-weight:500;padding:2px 10px;border-radius:99px;background:var(--yel-soft);border:1px solid var(--yel);color:#7a5a00}
+.hide{display:none}
+@media (max-width:520px){.mix{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<header><div class="in"><div class="logo"><img src="/static/logo-ut.png" alt="Logo Universitas Terbuka"></div><div>
+  <h1>Generator Soal SD</h1>
+  <p class="sub">Kurikulum Merdeka · Matematika, Bahasa Indonesia, IPA, IPS · Kelas 1–6<br>Hasil: 3 file DOCX — kisi-kisi, soal, kunci &amp; rubrik</p>
+</div></div></header>
+<main>
+
+  <form id="f">
+  <section>
+    <details id="sekolah">
+      <summary>Identitas sekolah &amp; kop <span class="pill" id="sekolahPill">tersimpan otomatis</span></summary>
+      <div class="grid">
+        <div class="full"><label>Instansi (baris atas kop, opsional; satu baris per baris)</label>
+          <textarea name="instansi" rows="2" placeholder="PEMERINTAH KABUPATEN ...&#10;DINAS PENDIDIKAN"></textarea></div>
+        <div class="full"><label>Nama sekolah *</label><input name="nama_sekolah" required placeholder="SD Negeri 1 ..."></div>
+        <div class="full"><label>Alamat sekolah</label><input name="alamat" placeholder="Jl. ..., Kec. ..., Kab. ... Telp. ..."></div>
+        <div><label>Logo sekolah (opsional)</label><input type="file" name="logo" accept="image/png,image/jpeg">
+          <div class="hint" id="logoHint"></div></div>
+        <div><label>Tahun pelajaran *</label><input name="tahun_ajaran" required placeholder="2026/2027"></div>
+        <div><label>Nama guru</label><input name="guru"></div>
+        <div><label>NIP guru</label><input name="nip_guru"></div>
+        <div><label>Nama kepala sekolah</label><input name="kepsek"></div>
+        <div><label>NIP kepala sekolah</label><input name="nip_kepsek"></div>
+        <div class="full"><label>Tempat, tanggal (untuk tanda tangan)</label><input name="tempat_tanggal" placeholder="Karawang, 1 Desember 2026"></div>
+      </div>
+    </details>
+  </section>
+
+  <section>
+    <h2><span class="num">1</span>Asesmen</h2>
+    <div class="grid">
+      <div><label>Mata pelajaran</label>
+        <select name="mapel" id="mapel">
+          <option value="matematika">Matematika</option>
+          <option value="bahasa_indonesia">Bahasa Indonesia</option>
+          <option value="ipa">IPA</option>
+          <option value="ips">IPS</option>
+        </select></div>
+      <div><label>Kelas</label>
+        <select name="kelas" id="kelas">
+          <option value="1">Kelas 1 (Fase A)</option><option value="2">Kelas 2 (Fase A)</option>
+          <option value="3">Kelas 3 (Fase B)</option><option value="4" selected>Kelas 4 (Fase B)</option>
+          <option value="5">Kelas 5 (Fase C)</option><option value="6">Kelas 6 (Fase C)</option>
+        </select></div>
+      <div><label>Semester</label>
+        <select name="semester"><option>Ganjil</option><option>Genap</option></select></div>
+      <div><label>Jenis asesmen (judul dokumen)</label>
+        <select name="jenis_asesmen_pilih" id="jenis">
+          <option>Asesmen Sumatif Lingkup Materi</option>
+          <option>Sumatif Tengah Semester</option>
+          <option selected>Sumatif Akhir Semester</option>
+          <option>Sumatif Akhir Tahun</option>
+          <option>Latihan Soal</option>
+          <option value="__lain">Lainnya…</option>
+        </select>
+        <input class="hide" id="jenisLain" placeholder="Tulis judul asesmen" style="margin-top:6px"></div>
+      <div><label>Waktu pengerjaan (menit)</label><input name="waktu" type="number" min="0" value="60"></div>
+      <div><label>Sebaran kesulitan</label>
+        <select name="kesulitan">
+          <option value="seimbang (mudah 30%, sedang 50%, sulit 20%)">Seimbang</option>
+          <option value="lebih banyak soal mudah (mudah 50%, sedang 40%, sulit 10%)">Lebih mudah</option>
+          <option value="lebih menantang, perbanyak soal HOTS/penalaran (mudah 20%, sedang 40%, sulit 40%)">Lebih menantang (HOTS)</option>
+        </select></div>
+      <div class="full"><label>Materi / topik (opsional)</label>
+        <textarea name="materi" placeholder="Contoh: pecahan senilai, keliling dan luas persegi panjang. Kosongkan agar AI memilih materi sesuai semester."></textarea>
+        <div class="hint" id="ipasHint"></div></div>
+      <div class="full"><label>Catatan tambahan untuk AI (opsional)</label>
+        <input name="catatan" placeholder="Contoh: gunakan konteks daerah pesisir; hindari soal cerita yang terlalu panjang"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">2</span>Bentuk &amp; jumlah soal</h2>
+    <div class="grid">
+      <div><label>Bentuk soal</label>
+        <select name="bentuk" id="bentuk">
+          <option value="pg">Pilihan Ganda</option>
+          <option value="pg_kompleks">Pilihan Ganda Kompleks</option>
+          <option value="benar_salah">Benar-Salah</option>
+          <option value="menjodohkan">Menjodohkan</option>
+          <option value="isian">Isian Singkat</option>
+          <option value="uraian">Uraian</option>
+          <option value="campuran" selected>Campuran</option>
+        </select></div>
+      <div id="jmlTunggal" class="hide"><label>Jumlah soal</label><input name="jumlah" type="number" min="1" max="60" value="20"></div>
+    </div>
+    <div id="mix" class="mix">
+      <div><label>Pilihan Ganda</label><input name="jml_pg" type="number" min="0" value="15"></div>
+      <div><label>PG Kompleks</label><input name="jml_pg_kompleks" type="number" min="0" value="2"></div>
+      <div><label>Benar-Salah</label><input name="jml_benar_salah" type="number" min="0" value="1"></div>
+      <div><label>Menjodohkan</label><input name="jml_menjodohkan" type="number" min="0" value="1"></div>
+      <div><label>Isian Singkat</label><input name="jml_isian" type="number" min="0" value="5"></div>
+      <div><label>Uraian</label><input name="jml_uraian" type="number" min="0" value="3"></div>
+    </div>
+    <div class="hint" id="total"></div>
+  </section>
+
+  <section>
+    <h2><span class="num">3</span>Simpan ke folder</h2>
+    <div class="row">
+      <input name="folder" id="folder" required placeholder="/home/.../Documents/Soal">
+      <button type="button" id="btnFolder">Pilih folder…</button>
+    </div>
+    <div class="hint">Folder dibuat otomatis bila belum ada. File yang namanya sama tidak ditimpa.</div>
+  </section>
+
+  <section>
+    <details id="pengaturan">
+      <summary>Pengaturan AI <span class="pill" id="keyPill">…</span></summary>
+      <label>API key Anthropic (Claude)</label>
+      <div class="row">
+        <input id="apiKey" type="password" placeholder="sk-ant-..." autocomplete="off">
+        <button type="button" id="btnKey">Simpan</button>
+      </div>
+      <div class="hint">Disimpan hanya di komputer ini (~/.config/generator-soal-sd). Buat key di console.anthropic.com → API Keys.</div>
+    </details>
+  </section>
+
+  <button class="primary" id="btnGo" type="submit">Buat Soal</button>
+  </form>
+
+  <section id="hasil" class="hide" style="margin-top:14px">
+    <h2>Proses</h2>
+    <div id="statusLine"></div>
+    <div id="log"></div>
+    <div class="files" id="files"></div>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const f = $('#f');
+const BENTUK_KEYS = ['pg','pg_kompleks','benar_salah','menjodohkan','isian','uraian'];
+
+function updBentuk(){
+  const camp = $('#bentuk').value === 'campuran';
+  $('#mix').classList.toggle('hide', !camp);
+  $('#jmlTunggal').classList.toggle('hide', camp);
+  const tot = camp ? BENTUK_KEYS.reduce((a,k)=>a+(+f['jml_'+k].value||0),0) : (+f.jumlah.value||0);
+  $('#total').textContent = `Total ${tot} soal` + (tot>60?' — maksimal 60':'');
+}
+function updIpas(){
+  const m = $('#mapel').value, k = +$('#kelas').value;
+  $('#ipasHint').textContent = (m==='ipa'||m==='ips')
+    ? (k<=2 ? 'Catatan: di Fase A (kelas 1–2) IPAS belum menjadi mapel tersendiri; soal disusun dari muatan IPA/IPS yang sesuai usia.'
+            : 'Di Kurikulum Merdeka, IPA dan IPS tergabung dalam IPAS; soal diambil dari bagian ' + (m==='ipa'?'IPA':'IPS') + ' pada CP IPAS.')
+    : '';
+}
+$('#bentuk').onchange = updBentuk; f.addEventListener('input', updBentuk);
+$('#mapel').onchange = updIpas; $('#kelas').onchange = updIpas;
+$('#jenis').onchange = () => $('#jenisLain').classList.toggle('hide', $('#jenis').value!=='__lain');
+
+async function loadConf(){
+  const c = await (await fetch('/api/config')).json();
+  for (const k of ['instansi','nama_sekolah','alamat','tahun_ajaran','guru','nip_guru','kepsek','nip_kepsek','tempat_tanggal','folder'])
+    if (c[k]) f[k].value = c[k];
+  if (!c.nama_sekolah) $('#sekolah').open = true;
+  $('#logoHint').textContent = c.punya_logo ? 'Logo tersimpan akan dipakai. Unggah baru untuk mengganti.' : '';
+  $('#keyPill').textContent = c.punya_api_key ? 'API key tersimpan' : 'API key belum diisi';
+  if (!c.punya_api_key) $('#pengaturan').open = true;
+}
+
+$('#btnKey').onclick = async () => {
+  await fetch('/api/api-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:$('#apiKey').value})});
+  $('#apiKey').value=''; loadConf();
+};
+$('#btnFolder').onclick = async () => {
+  const r = await fetch('/api/pilih-folder',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({folder:f.folder.value})});
+  const j = await r.json();
+  if (j.error) alert(j.error); else if (j.folder) f.folder.value = j.folder;
+};
+
+f.onsubmit = async e => {
+  e.preventDefault();
+  const fd = new FormData(f);
+  fd.set('jenis_asesmen', $('#jenis').value==='__lain' ? ($('#jenisLain').value.trim()||'Asesmen Sumatif') : $('#jenis').value);
+  const btn = $('#btnGo'); btn.disabled = true; btn.textContent = 'Sedang membuat…';
+  $('#hasil').classList.remove('hide'); $('#log').textContent=''; $('#files').innerHTML=''; $('#statusLine').textContent='';
+  $('#hasil').scrollIntoView({behavior:'smooth'});
+  try {
+    const r = await fetch('/api/generate',{method:'POST',body:fd});
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error||'Gagal');
+    await poll(j.job_id);
+  } catch(err){
+    $('#statusLine').innerHTML = `<span class="err">${err.message}</span>`;
+  } finally { btn.disabled=false; btn.textContent='Buat Soal'; loadConf(); }
+};
+
+async function poll(id){
+  for(;;){
+    const j = await (await fetch('/api/status/'+id)).json();
+    $('#log').textContent = j.log.join('\n');
+    if (j.status==='selesai'){
+      $('#statusLine').innerHTML = '<span class="ok">Selesai ✓</span>';
+      const folder = j.files[0].replace(/\/[^/]+$/,'');
+      $('#files').innerHTML = j.files.map(p=>`<div>📄 ${p.split('/').pop()}</div>`).join('') +
+        `<p><button type="button" id="openDir">Buka folder</button></p>`;
+      $('#openDir').onclick = () => fetch('/api/buka-folder',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({folder})});
+      return;
+    }
+    if (j.status==='gagal') throw new Error(j.error);
+    await new Promise(r=>setTimeout(r,2000));
+  }
+}
+updBentuk(); updIpas(); loadConf();
+</script>
+</body>
+</html>
