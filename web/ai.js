@@ -228,14 +228,42 @@ export async function daftarModel(provider, key) {
 }
 
 // Pilih model bawaan terbaik dari daftar yang tersedia.
-export function modelBawaan(provider, list) {
-  const d = PROVIDERS[provider].defaultModel;
-  if (!list.length || (provider === "claude" && list.includes(d))) return d;
-  const ver = (n) => parseFloat((n.match(/(\d+(?:\.\d+)?)/) || [0, 0])[1]);
-  const pick = (re) => list.filter((n) => re.test(n)).sort((a, b) => ver(b) - ver(a))[0];
-  if (provider === "gemini") return pick(/^gemini-[\d.]+-flash$/) || pick(/^gemini-[\d.]+-pro$/) || (list.includes(d) ? d : list[0]);
-  if (provider === "openai") return pick(/^gpt-[\d.]+$/) || (list.includes(d) ? d : list[0]);
-  return list[0];
+// Pilihan model ringkas (maks. 3) untuk dropdown; yang pertama = rekomendasi.
+const CLAUDE_PILIHAN = [
+  ["claude-opus-5-5", "Claude Opus 5.5 — kualitas terbaik"],
+  ["claude-sonnet-5-5", "Claude Sonnet 5.5 — lebih hemat"],
+  ["claude-haiku-5-5", "Claude Haiku 5.5 — paling murah"],
+];
+
+export function pilihanModel(provider, list = []) {
+  if (provider === "claude") {
+    const ada = CLAUDE_PILIHAN.filter(([id]) => !list.length || list.includes(id));
+    return (ada.length ? ada : CLAUDE_PILIHAN).map(([id, label]) => ({ id, label }));
+  }
+  // urutkan versi terbaru dulu, dibandingkan per bagian angka (3.10 > 3.9)
+  const ver = (n) => ((n.match(/-(\d+(?:\.\d+)*)/) || [0, "0"])[1]).split(".").map(Number);
+  const banding = (a, b) => { const x = ver(a), y = ver(b); for (let i = 0; i < 3; i++) if ((y[i] || 0) !== (x[i] || 0)) return (y[i] || 0) - (x[i] || 0); return 0; };
+  const terbaru = (re) => list.filter((n) => re.test(n)).sort(banding)[0];
+  const nama = (id) => id.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()).replace(/^Gpt/, "GPT");
+  let out = [];
+  if (provider === "gemini") {
+    const flash = terbaru(/^gemini-[\d.]+-flash$/), pro = terbaru(/^gemini-[\d.]+-pro$/), lite = terbaru(/^gemini-[\d.]+-flash-lite$/);
+    out = [
+      flash && { id: flash, label: `${nama(flash)} — cepat, kuota gratis besar` },
+      pro && { id: pro, label: `${nama(pro)} — lebih teliti, kuota gratis kecil` },
+      lite && { id: lite, label: `${nama(lite)} — paling cepat` },
+    ];
+  } else if (provider === "openai") {
+    const utama = terbaru(/^gpt-[\d.]+$/), mini = terbaru(/^gpt-[\d.]+-mini$/), nano = terbaru(/^gpt-[\d.]+-nano$/);
+    out = [
+      utama && { id: utama, label: `${nama(utama)} — kualitas terbaik` },
+      mini && { id: mini, label: `${nama(mini)} — lebih hemat` },
+      nano && { id: nano, label: `${nama(nano)} — paling murah` },
+    ];
+  }
+  out = out.filter(Boolean);
+  if (!out.length) { const d = PROVIDERS[provider].defaultModel; out = [{ id: d, label: nama(d) }]; }
+  return out;
 }
 
 // ---------------- alur utama ----------------

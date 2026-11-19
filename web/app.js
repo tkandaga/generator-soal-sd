@@ -1,4 +1,4 @@
-import { BENTUK, MAPEL, PROVIDERS, buatGambar, buatSoal, daftarModel, modelBawaan } from "./ai.js";
+import { BENTUK, MAPEL, PROVIDERS, buatGambar, buatSoal, daftarModel, pilihanModel } from "./ai.js";
 import { buatSemua } from "./dokumen.js";
 
 const $ = (s) => document.querySelector(s);
@@ -76,10 +76,17 @@ const provSel = $("#provider");
 provSel.innerHTML = Object.entries(PROVIDERS).map(([k, p]) => `<option value="${k}">${p.nama}</option>`).join("");
 provSel.value = ai.provider;
 
+ai.pilihan = ai.pilihan || {};
+function isiDropdownModel(p) {
+  const opsi = ai.pilihan[p] || pilihanModel(p);
+  if (!opsi.some((o) => o.id === ai.models[p])) ai.models[p] = opsi[0].id;
+  $("#model").innerHTML = opsi.map((o) => `<option value="${o.id}">${o.label}</option>`).join("");
+  $("#model").value = ai.models[p];
+}
 function tampilAI() {
   const p = provSel.value;
   $("#apiKey").value = ai.keys[p] || "";
-  $("#model").value = ai.models[p] || PROVIDERS[p].defaultModel;
+  isiDropdownModel(p);
   $("#keyLink").href = PROVIDERS[p].keyUrl;
   $("#keyLink").textContent = PROVIDERS[p].keyUrl.replace("https://", "");
   $("#keyPill").textContent = ai.keys[ai.provider] ? `${PROVIDERS[ai.provider].nama} siap` : "API key belum diisi";
@@ -89,25 +96,30 @@ function simpanAI() {
   const p = provSel.value;
   ai.provider = p;
   ai.keys[p] = $("#apiKey").value.trim();
-  ai.models[p] = $("#model").value.trim() || PROVIDERS[p].defaultModel;
+  ai.models[p] = $("#model").value;
   ls.set("ai", ai);
   tampilAI();
 }
 async function muatModel() {
   const p = provSel.value, key = $("#apiKey").value.trim();
   if (!key) return;
-  $("#modelHint").textContent = "Memuat daftar model…";
+  $("#modelHint").textContent = "Memeriksa model yang tersedia…";
   const list = await daftarModel(p, key);
-  $("#modelList").innerHTML = list.map((m) => `<option value="${m}">`).join("");
-  if (!ai.models[p] || (list.length && !list.includes(ai.models[p]))) $("#model").value = modelBawaan(p, list);
-  $("#modelHint").textContent = list.length ? `${list.length} model tersedia. Klik kolom untuk memilih.` : "Daftar model tidak dapat dimuat (periksa API key). Model bisa diketik manual.";
+  if (list.length) {
+    ai.pilihan[p] = pilihanModel(p, list);
+    $("#modelHint").textContent = "Pilihan pertama paling direkomendasikan.";
+  } else {
+    $("#modelHint").textContent = "Daftar model tidak dapat dimuat — periksa API key.";
+  }
+  isiDropdownModel(p);
   simpanAI();
 }
-provSel.onchange = () => { tampilAI(); $("#modelList").innerHTML = ""; $("#modelHint").textContent = ""; };
+provSel.onchange = () => { tampilAI(); $("#modelHint").textContent = ""; if (ai.keys[provSel.value] && !ai.pilihan[provSel.value]) muatModel(); };
 $("#btnKey").onclick = async () => { simpanAI(); await muatModel(); };
 $("#model").onchange = simpanAI;
 tampilAI();
 if (!ai.keys[ai.provider]) $("#pengaturan").open = true;
+else if (!ai.pilihan[ai.provider]) muatModel();
 
 // ---------- folder simpan ----------
 let folder = null;
