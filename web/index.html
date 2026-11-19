@@ -46,6 +46,15 @@ details[open] summary{margin-bottom:12px}
 a{color:var(--acc)}
 .pill{display:inline-block;font-size:12px;font-weight:500;padding:2px 10px;border-radius:99px;background:var(--yel-soft);border:1px solid var(--yel);color:#7a5a00}
 .hide{display:none}
+.prog{margin-bottom:8px}
+.prog-top{display:flex;justify-content:space-between;font-weight:600;color:var(--acc-dark);margin-bottom:6px}
+.bar{height:16px;background:#fff;border:1px solid var(--line);border-radius:99px;overflow:hidden}
+.fill{height:100%;width:0;background:linear-gradient(90deg,var(--acc),#3d7fff);border-radius:99px;transition:width .6s ease;position:relative;overflow:hidden}
+.fill::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(255,255,255,.28) 0 10px,transparent 10px 20px);background-size:28px 28px;animation:jalan 1s linear infinite}
+.prog.selesai .fill{background:var(--ok)} .prog.selesai .fill::after,.prog.gagal .fill::after{display:none}
+.prog.gagal .fill{background:var(--err)}
+@keyframes jalan{to{background-position:28px 0}}
+@media (prefers-reduced-motion:reduce){.fill::after{animation:none}.fill{transition:none}}
 @media (max-width:520px){.mix{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -176,6 +185,11 @@ a{color:var(--acc)}
 
   <section id="hasil" class="hide" style="margin-top:14px">
     <h2>Proses</h2>
+    <div class="prog" id="prog">
+      <div class="prog-top"><span id="progTahap">Menyiapkan…</span><span id="progPersen">0%</span></div>
+      <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="bar"><div class="fill" id="barFill"></div></div>
+      <div class="hint" id="progWaktu"></div>
+    </div>
     <div id="statusLine"></div>
     <div id="log"></div>
     <div class="files" id="files"></div>

@@ -278,9 +278,11 @@ Catatan tambahan dari guru: ${params.catatan?.trim() || "-"}`;
   return data;
 }
 
-export async function buatGambar(cfg, data, mapel, log) {
+export async function buatGambar(cfg, data, mapel, log, onProgress = () => {}) {
   const perlu = data.soal.filter((s) => s.perlu_gambar && s.deskripsi_gambar.trim());
   if (!perlu.length) return;
+  let selesai = 0;
+  onProgress(0, perlu.length);
   log(`Membuat ${perlu.length} gambar…`);
   const system = mapel === "matematika" ? SYSTEM_GAMBAR_MTK : SYSTEM_GAMBAR_UMUM;
   const antre = [...perlu];
@@ -295,6 +297,7 @@ export async function buatGambar(cfg, data, mapel, log) {
         s.svg = null;
         log(`Gambar soal no. ${s.nomor} gagal dibuat: ${e.message}`);
       }
+      onProgress(++selesai, perlu.length);
     }
   };
   await Promise.all(Array.from({ length: cfg.provider === "gemini" ? 2 : 4 }, kerja));

@@ -137,6 +137,44 @@ async function simpanKeFolder(dir, nama, blob) {
 const logEl = $("#log");
 const log = (m) => { logEl.textContent += (logEl.textContent ? "\n" : "") + m; };
 
+// Loading bar: tahap yang lamanya tak pasti dianimasikan mendekati batas atasnya.
+const progres = {
+  timer: null, mulai: 0, p: 0, dari: 0, ke: 0, est: 1, t0: 0,
+  reset() {
+    clearInterval(this.timer);
+    $("#prog").className = "prog";
+    this.mulai = Date.now();
+    this.p = 0;
+    this.render();
+    this.timer = setInterval(() => this.tick(), 250);
+  },
+  tahap(label, dari, ke, estDetik) {
+    $("#progTahap").textContent = label;
+    Object.assign(this, { dari: Math.max(dari, this.p), ke, est: estDetik, t0: Date.now() });
+  },
+  tick() {
+    const t = (Date.now() - this.t0) / 1000;
+    const target = this.dari + (this.ke - this.dari) * 0.95 * (1 - Math.exp((-3 * t) / this.est));
+    this.p = Math.max(this.p, target);
+    this.render();
+  },
+  render() {
+    const pct = Math.floor(this.p);
+    $("#barFill").style.width = this.p + "%";
+    $("#bar").setAttribute("aria-valuenow", pct);
+    $("#progPersen").textContent = pct + "%";
+    const d = Math.floor((Date.now() - this.mulai) / 1000);
+    $("#progWaktu").textContent = `Waktu berjalan ${Math.floor(d / 60)}:${String(d % 60).padStart(2, "0")}`;
+  },
+  akhir(ok) {
+    clearInterval(this.timer);
+    if (ok) { this.p = 100; $("#progTahap").textContent = "Selesai"; }
+    else $("#progTahap").textContent = "Gagal";
+    $("#prog").className = "prog " + (ok ? "selesai" : "gagal");
+    this.render();
+  },
+};
+
 f.onsubmit = async (e) => {
   e.preventDefault();
   simpanAI();
@@ -149,6 +187,7 @@ f.onsubmit = async (e) => {
   $("#hasil").classList.remove("hide");
   logEl.textContent = ""; $("#files").innerHTML = ""; $("#statusLine").textContent = "";
   const gagal = (m) => { $("#statusLine").innerHTML = `<span class="err"></span>`; $("#statusLine .err").textContent = m; };
+  $("#prog").classList.add("hide");
   if (!cfg.key) { $("#pengaturan").open = true; return gagal("API key belum diisi (bagian Pengaturan AI)."); }
   if (!tot) return gagal("Jumlah soal masih 0.");
   if (tot > 60) return gagal("Maksimal 60 soal sekali buat.");
@@ -164,9 +203,15 @@ f.onsubmit = async (e) => {
   const btn = $("#btnGo");
   btn.disabled = true; btn.textContent = "Sedang membuat…";
   $("#hasil").scrollIntoView({ behavior: "smooth" });
+  progres.reset();
   try {
+    progres.tahap("Menyusun TP, KKTP, dan soal…", 2, 60, 30 + 4 * tot);
     const data = await buatSoal(cfg, { ...info, jumlah }, log);
-    await buatGambar(cfg, data, info.mapel, log);
+    const nGambar = data.soal.filter((s) => s.perlu_gambar && s.deskripsi_gambar.trim()).length;
+    if (nGambar) progres.tahap(`Membuat gambar (0/${nGambar})…`, 60, 60 + 30 / nGambar, 30);
+    await buatGambar(cfg, data, info.mapel, log, (selesai, n) =>
+      progres.tahap(`Membuat gambar (${selesai}/${n})…`, 60 + (30 * selesai) / n, 60 + (30 * Math.min(n, selesai + 1)) / n, 30));
+    progres.tahap("Menyusun file DOCX…", 90, 99, 4);
     info.logo = await logoUntukDocx();
     const singkat = info.jenis_asesmen.replace(/[^\w\s-]/g, "").trim();
     const prefix = `${MAPEL[info.mapel].split(" (")[0]} Kelas ${info.kelas} - ${singkat}`.replace(/\s+/g, " ").slice(0, 90);
@@ -187,9 +232,11 @@ f.onsubmit = async (e) => {
     $("#files").querySelectorAll("a").forEach((a) => (a.onclick = (ev) => { ev.preventDefault(); unduh(files[+a.dataset.i]); }));
     if (!disimpan) { for (const x of files) unduh(x); log("File diunduh ke folder Download."); }
     ls.set("terakhir", { info: { ...info, logo: null }, data });
+    progres.akhir(true);
     $("#statusLine").innerHTML = '<span class="ok">Selesai ✓</span>';
   } catch (err) {
     console.error(err);
+    progres.akhir(false);
     gagal(err.message || String(err));
   } finally {
     btn.disabled = false; btn.textContent = "Buat Soal";
