@@ -20,7 +20,7 @@ export const MAPEL = {
 export const fase = (kelas) => (kelas <= 2 ? "A" : kelas <= 4 ? "B" : "C");
 
 export const PROVIDERS = {
-  gemini: { nama: "Google Gemini", keyUrl: "https://aistudio.google.com/apikey", defaultModel: "gemini-2.5-flash" },
+  gemini: { nama: "Google Gemini", keyUrl: "https://aistudio.google.com/apikey", defaultModel: "gemini-3.8-flash" },
   claude: { nama: "Anthropic Claude", keyUrl: "https://console.anthropic.com/settings/keys", defaultModel: "claude-opus-5-5" },
   openai: { nama: "OpenAI", keyUrl: "https://platform.openai.com/api-keys", defaultModel: "gpt-5" },
 };
@@ -230,11 +230,11 @@ export async function daftarModel(provider, key) {
 // Pilih model bawaan terbaik dari daftar yang tersedia.
 export function modelBawaan(provider, list) {
   const d = PROVIDERS[provider].defaultModel;
-  if (!list.length || list.includes(d)) return d;
+  if (!list.length || (provider === "claude" && list.includes(d))) return d;
   const ver = (n) => parseFloat((n.match(/(\d+(?:\.\d+)?)/) || [0, 0])[1]);
   const pick = (re) => list.filter((n) => re.test(n)).sort((a, b) => ver(b) - ver(a))[0];
-  if (provider === "gemini") return pick(/^gemini-[\d.]+-flash$/) || pick(/^gemini-[\d.]+-pro$/) || list[0];
-  if (provider === "openai") return pick(/^gpt-[\d.]+$/) || list[0];
+  if (provider === "gemini") return pick(/^gemini-[\d.]+-flash$/) || pick(/^gemini-[\d.]+-pro$/) || (list.includes(d) ? d : list[0]);
+  if (provider === "openai") return pick(/^gpt-[\d.]+$/) || (list.includes(d) ? d : list[0]);
   return list[0];
 }
 

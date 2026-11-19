@@ -70,6 +70,8 @@ async function logoUntukDocx() {
 
 // ---------- pengaturan AI ----------
 const ai = ls.get("ai", { provider: "gemini", keys: {}, models: {} });
+// model lama yang sudah dihentikan Google
+if (/^gemini-(1\.|2\.0|2\.5)/.test(ai.models.gemini || "")) delete ai.models.gemini;
 const provSel = $("#provider");
 provSel.innerHTML = Object.entries(PROVIDERS).map(([k, p]) => `<option value="${k}">${p.nama}</option>`).join("");
 provSel.value = ai.provider;
